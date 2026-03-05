@@ -1,6 +1,6 @@
 [
-  {\"id\":\"grace\",\"name\":\"Grace Hopper\"},
-  {\"id\":\"alex\",\"name\":\"Alex Morgan\"},
-  {\"id\":\"taylor\",\"name\":\"Taylor Chen\"},
-  {\"id\":\"jordan\",\"name\":\"Jordan Lee\"}
+  { "id": "grace", "name": "Grace Hopper" },
+  { "id": "alex", "name": "Alex Morgan" },
+  { "id": "taylor", "name": "Taylor Chen" },
+  { "id": "jordan", "name": "Jordan Lee" }
 ]
