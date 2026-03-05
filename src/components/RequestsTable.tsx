@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
-import type { DemoUser, ScreenKey, RequestRecord } from "../models/types";
+import type { AppConfig, DemoUser, ScreenKey, RequestRecord } from "../models/types";
+import { getPrimaryButtonStyle } from "./requests/RequestActionBar";
 
 type RequestRow = {
   id: string;
@@ -17,6 +18,7 @@ type Props = {
   currentUser: DemoUser;
   mode: "all" | "my" | "pending";
   onNavigate: (screen: ScreenKey) => void;
+  config: AppConfig;
   requests: RequestRecord[];
   getUserName: (id: string | null) => string;
   onOpenRequest?: (requestId: string) => void;
@@ -53,6 +55,7 @@ export default function RequestsTable({
   currentUser,
   mode,
   onNavigate,
+  config,
   requests,
   getUserName,
   onOpenRequest,
@@ -85,9 +88,7 @@ export default function RequestsTable({
             }}
           >
             <div>
-              <h2 style={{ margin: 0, fontSize: 28, color: "#111827" }}>
-                {title}
-              </h2>
+              <h2 style={{ margin: 0, fontSize: 28, color: "#111827" }}>{title}</h2>
               <p
                 style={{
                   marginTop: 8,
@@ -103,14 +104,8 @@ export default function RequestsTable({
             <button
               onClick={() => onNavigate("new")}
               style={{
-                background: "#ffffff",
-                color: "#111827",
-                border: "1px solid #d1d5db",
+                ...getPrimaryButtonStyle(config.buttonColor),
                 borderRadius: 12,
-                padding: "10px 16px",
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: "pointer",
               }}
             >
               New Request
@@ -200,12 +195,8 @@ export default function RequestsTable({
               alignItems: "center",
             }}
           >
-            <div style={{ fontSize: 22, fontWeight: 700, color: "#111827" }}>
-              Results
-            </div>
-            <div style={{ fontSize: 14, color: "#6b7280" }}>
-              {rows.length} record(s)
-            </div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: "#111827" }}>Results</div>
+            <div style={{ fontSize: 14, color: "#6b7280" }}>{rows.length} record(s)</div>
           </div>
 
           <div style={{ overflowX: "auto" }}>

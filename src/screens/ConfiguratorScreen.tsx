@@ -18,6 +18,8 @@ type Props = {
   currentUser: DemoUser;
 };
 
+type ConfirmDialog = "none" | "confirmReset";
+
 export default function ConfiguratorScreen({
   onNavigate,
   config,
@@ -29,6 +31,7 @@ export default function ConfiguratorScreen({
   const [draftFieldRows, setDraftFieldRows] = useState<DraftFieldRow[]>(() =>
     buildDraftFieldRows(config)
   );
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog>("none");
 
   useEffect(() => {
     setDraftConfig(config);
@@ -42,28 +45,46 @@ export default function ConfiguratorScreen({
     }));
   }
 
-  function handleSubmit() {
+  function validateDraft(): { sections: AppConfig["sections"]; fields: AppConfig["fields"] } | null {
     const ids = draftConfig.statuses.map((s) => s.id);
     const unique = new Set(ids);
     if (unique.size !== ids.length) {
       alert("Statuses must have unique IDs. Please adjust stage names.");
-      return;
+      return null;
     }
 
     const { sections, fields } = buildSectionsAndFields(draftFieldRows);
 
     if (sections.length === 0 || fields.length === 0) {
       alert("Add at least one field with a name and section.");
-      return;
+      return null;
     }
+
+    return { sections, fields };
+  }
+
+  function openConfirm() {
+    const validated = validateDraft();
+    if (!validated) return;
+    setConfirmDialog("confirmReset");
+  }
+
+  function closeConfirm() {
+    setConfirmDialog("none");
+  }
+
+  function applyTemplate() {
+    const validated = validateDraft();
+    if (!validated) return;
 
     setAppConfig({
       ...draftConfig,
-      sections,
-      fields,
+      sections: validated.sections,
+      fields: validated.fields,
     });
 
     resetRequests();
+    closeConfirm();
     onNavigate("home");
   }
 
@@ -178,12 +199,85 @@ export default function ConfiguratorScreen({
               Cancel
             </button>
 
-            <button onClick={handleSubmit} style={primaryButtonStyle}>
+            <button
+              onClick={openConfirm}
+              style={primaryButtonStyle(draftConfig.buttonColor)}
+            >
               Submit Template
             </button>
           </div>
         </div>
       </main>
+
+      {confirmDialog === "confirmReset" && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(17, 24, 39, 0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 560,
+              background: "#ffffff",
+              border: "1px solid #d1d5db",
+              borderRadius: 16,
+              padding: 20,
+              boxSizing: "border-box",
+            }}
+          >
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#111827", marginBottom: 8 }}>
+              Apply template and reset requests?
+            </div>
+
+            <div style={{ fontSize: 14, color: "#4b5563", lineHeight: 1.6 }}>
+              Submitting a template clears all existing demo requests so the new configuration starts
+              clean.
+            </div>
+
+            <div
+              style={{
+                marginTop: 18,
+                padding: 12,
+                borderRadius: 12,
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                fontSize: 14,
+                color: "#111827",
+              }}
+            >
+              This action cannot be undone.
+            </div>
+
+            <div
+              style={{
+                marginTop: 20,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 12,
+              }}
+            >
+              <button onClick={closeConfirm} style={secondaryButtonStyle}>
+                Cancel
+              </button>
+
+              <button
+                onClick={applyTemplate}
+                style={primaryButtonStyle(draftConfig.buttonColor)}
+              >
+                Confirm & Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -198,11 +292,7 @@ function ConfigInput({ label, value, onChange }: ConfigInputProps) {
   return (
     <div>
       <label style={labelStyle}>{label}</label>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={inputStyle}
-      />
+      <input value={value} onChange={(e) => onChange(e.target.value)} style={inputStyle} />
     </div>
   );
 }
@@ -240,16 +330,16 @@ const inputStyle = {
   boxSizing: "border-box" as const,
 };
 
-const primaryButtonStyle = {
-  background: "#111827",
+const primaryButtonStyle = (buttonColor: string) => ({
+  background: buttonColor,
   color: "#ffffff",
-  border: "1px solid #111827",
+  border: `1px solid ${buttonColor}`,
   borderRadius: 10,
   padding: "10px 16px",
   fontSize: 14,
   fontWeight: 600,
   cursor: "pointer",
-};
+});
 
 const secondaryButtonStyle = {
   background: "#ffffff",

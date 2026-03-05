@@ -1,11 +1,6 @@
 import Header from "../components/Header";
 import RequestsTable from "../components/RequestsTable";
-import type {
-  AppConfig,
-  DemoUser,
-  ScreenKey,
-  RequestRecord,
-} from "../models/types";
+import type { AppConfig, DemoUser, ScreenKey, RequestRecord } from "../models/types";
 
 type Props = {
   onNavigate: (screen: ScreenKey) => void;
@@ -33,6 +28,7 @@ export default function MyRequestsScreen({
         currentUser={currentUser}
         mode="my"
         onNavigate={onNavigate}
+        config={config}
         requests={requests}
         getUserName={getUserName}
         onOpenRequest={onOpenRequest}

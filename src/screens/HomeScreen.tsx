@@ -1,5 +1,6 @@
 import Header from "../components/Header";
 import type { AppConfig, DemoUser, ScreenKey } from "../models/types";
+import { getPrimaryButtonStyle } from "../components/requests/RequestActionBar";
 
 type Props = {
   onNavigate: (screen: ScreenKey) => void;
@@ -8,9 +9,9 @@ type Props = {
 };
 
 const NAV_ITEMS: { screen: ScreenKey; label: string; description: string; icon: string }[] = [
-  { screen: "my",      label: "My Requests",      description: "View and manage your requests",    icon: "📋" },
-  { screen: "pending", label: "Pending Approvals", description: "Review items awaiting action",     icon: "⏱" },
-  { screen: "all",     label: "All Requests",      description: "Browse all submitted requests",    icon: "🗂" },
+  { screen: "my", label: "My Requests", description: "View and manage your requests", icon: "📋" },
+  { screen: "pending", label: "Pending Approvals", description: "Review items awaiting action", icon: "⏱" },
+  { screen: "all", label: "All Requests", description: "Browse all submitted requests", icon: "🗂" },
   { screen: "configurator", label: "Settings", description: "Update application settings", icon: "⚙️" },
 ];
 
@@ -21,7 +22,6 @@ export default function HomeScreen({ onNavigate, config, currentUser }: Props) {
 
       {/* Full-height split below header */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-
         {/* ── LEFT PANEL: 60%, light gray ── */}
         <div
           style={{
@@ -84,16 +84,13 @@ export default function HomeScreen({ onNavigate, config, currentUser }: Props) {
           <button
             onClick={() => onNavigate("new")}
             style={{
+              ...getPrimaryButtonStyle(config.buttonColor),
               alignSelf: "flex-start",
-              background: config.buttonColor,
-              color: "#ffffff",
-              border: "none",
-              borderRadius: 10,
               padding: "13px 24px",
               fontSize: 14,
               fontWeight: 700,
-              cursor: "pointer",
               letterSpacing: "0.01em",
+              border: `1px solid ${config.buttonColor}`,
             }}
           >
             {config.newButtonLabel}
@@ -115,7 +112,9 @@ export default function HomeScreen({ onNavigate, config, currentUser }: Props) {
               { value: "5", label: "Completed" },
             ].map(({ value, label }) => (
               <div key={label}>
-                <div style={{ fontSize: 30, fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>{value}</div>
+                <div style={{ fontSize: 30, fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
+                  {value}
+                </div>
                 <div style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{label}</div>
               </div>
             ))}
@@ -191,9 +190,7 @@ export default function HomeScreen({ onNavigate, config, currentUser }: Props) {
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 2 }}>
                     {label}
                   </div>
-                  <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.4 }}>
-                    {description}
-                  </div>
+                  <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.4 }}>{description}</div>
                 </div>
 
                 {/* Arrow */}
@@ -202,7 +199,6 @@ export default function HomeScreen({ onNavigate, config, currentUser }: Props) {
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );
