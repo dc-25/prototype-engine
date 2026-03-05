@@ -14,6 +14,9 @@ export const defaultConfig: AppConfig = {
   pillColor: "#f9e4a0",
   pillTextColor: "#78540a",
 
+  // Optional brand logo shown in the UI (e.g., bottom-right). Leave blank for none.
+  logoUrl: "",
+
   statuses: [
     { id: "draft", name: "Draft", approverUserId: null },
     { id: "submitted", name: "Submitted", approverUserId: "grace" },

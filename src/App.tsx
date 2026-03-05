@@ -52,17 +52,18 @@ export default function App() {
   }
 
   function resetRequests() {
-  setRequests([]);
-  setSelectedRequestId(null);
-}
+    setRequests([]);
+    setSelectedRequestId(null);
+  }
 
   return (
     <>
+      {/* User switcher (bottom-left) */}
       <div
         style={{
           position: "fixed",
           bottom: 12,
-          right: 12,
+          left: 12,
           zIndex: 2000,
           background: "#ffffff",
           border: "1px solid #e5e7eb",
@@ -94,12 +95,25 @@ export default function App() {
         </select>
       </div>
 
+      {/* Logo slot (bottom-right) */}
+     {appConfig.logoUrl ? (
+  <img
+    src={appConfig.logoUrl}
+    alt="Logo"
+    style={{
+      position: "fixed",
+      bottom: 10,
+      right: 10,
+      zIndex: 2000,
+      height: 64,
+      width: "auto",
+      display: "block",
+    }}
+  />
+) : null}
+
       {screen === "home" && (
-        <HomeScreen
-          onNavigate={handleNavigate}
-          config={appConfig}
-          currentUser={currentUser}
-        />
+        <HomeScreen onNavigate={handleNavigate} config={appConfig} currentUser={currentUser} />
       )}
 
       {screen === "new" && (

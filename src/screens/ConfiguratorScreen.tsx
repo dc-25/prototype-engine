@@ -168,7 +168,16 @@ export default function ConfiguratorScreen({
               value={draftConfig.buttonColor}
               onChange={(value) => handleTextChange("buttonColor", value)}
             />
-
+            <ConfigInput
+              label="Logo URL"
+              value={draftConfig.logoUrl}
+              onChange={(value) => handleTextChange("logoUrl", value)}
+            />
+            <ConfigInput
+              label="Logo URL"
+              value={draftConfig.logoUrl}
+              onChange={(value) => handleTextChange("logoUrl", value)}
+            />
             <ConfigInput
               label="Pill Color"
               value={draftConfig.pillColor}

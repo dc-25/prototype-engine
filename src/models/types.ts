@@ -40,6 +40,9 @@ export type AppConfig = {
   pillColor: string;
   pillTextColor: string;
 
+  // Optional brand logo shown in the UI (e.g., bottom-right)
+  logoUrl: string;
+
   statuses: StatusConfig[];
   sections: SectionConfig[];
   fields: FieldConfig[];
