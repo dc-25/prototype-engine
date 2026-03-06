@@ -60,14 +60,22 @@ export default function StatusEditor({ statuses, onChange }: Props) {
   function handleStatusNameChange(index: number, name: string) {
     const next = [...statuses];
     next[index] = { ...next[index], name };
+    updateStatuses(next);
+  }
 
-    if (index !== 0) {
-      const used = new Set(next.map((s, i) => (i === index ? "" : s.id)).filter(Boolean));
-      const base = slugify(name) || "status";
-      const unique = makeUniqueId(base, used);
-      next[index] = { ...next[index], id: unique };
-    }
+  function maybeRegenerateIdOnBlur(index: number) {
+    if (index === 0) return; // never change draft id
+    const next = [...statuses];
 
+    const name = next[index]?.name ?? "";
+    const used = new Set(next.map((s, i) => (i === index ? "" : s.id)).filter(Boolean));
+    const base = slugify(name) || "status";
+    const unique = makeUniqueId(base, used);
+
+    // Only update if it actually changed (prevents unnecessary rerenders)
+    if (next[index].id === unique) return;
+
+    next[index] = { ...next[index], id: unique };
     updateStatuses(next);
   }
 
@@ -126,7 +134,7 @@ export default function StatusEditor({ statuses, onChange }: Props) {
 
           return (
             <div
-              key={`${status.id}-${idx}`}
+              key={idx} // ✅ stable key; prevents remount while typing
               style={{
                 border: "1px solid #e5e7eb",
                 borderRadius: 12,
@@ -138,12 +146,11 @@ export default function StatusEditor({ statuses, onChange }: Props) {
               }}
             >
               <div>
-                <label style={labelStyle}>
-                  Name {isDraft ? "(Draft)" : isFinal ? "(Final)" : ""}
-                </label>
+                <label style={labelStyle}>Name {isDraft ? "(Draft)" : isFinal ? "(Final)" : ""}</label>
                 <input
                   value={status.name}
                   onChange={(e) => handleStatusNameChange(idx, e.target.value)}
+                  onBlur={() => maybeRegenerateIdOnBlur(idx)} // ✅ regenerate id only after typing finishes
                   style={inputStyle}
                   disabled={isDraft}
                 />

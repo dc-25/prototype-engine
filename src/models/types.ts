@@ -16,7 +16,17 @@ export type SectionConfig = {
   title: string;
 };
 
-export type FieldType = "text" | "multiline" | "number" | "date" | "choice" | "boolean";
+export type FieldType =
+  | "text"
+  | "multiline"
+  | "richtext"
+  | "number"
+  | "date"
+  | "choice"
+  | "boolean"
+  | "image";
+
+export type FieldLayout = "half" | "full" | "quarter";
 
 export type FieldConfig = {
   id: string;
@@ -25,6 +35,9 @@ export type FieldConfig = {
   section: 1 | 2 | 3;
   required: boolean;
   options?: string[];
+
+  // Layout hint for responsive grid rendering
+  layout?: FieldLayout; // default: "half"
 };
 
 export type AppConfig = {
@@ -48,6 +61,27 @@ export type AppConfig = {
   fields: FieldConfig[];
 };
 
+export type MunicipalityProfile = {
+  id: string;
+  municipality: string;
+  logoUrl: string;
+  headerColor: string;
+  buttonColor: string;
+  pillColor: string;
+  pillTextColor: string;
+  createdAtIso: string;
+  updatedAtIso: string;
+};
+
+export type PrototypeTemplate = {
+  id: string;
+  municipalityId: string;
+  templateName: string;
+  config: AppConfig;
+  createdAtIso: string;
+  updatedAtIso: string;
+};
+
 export type RequestStatusHistoryItem = {
   action: "SavedDraft" | "Submitted" | "Approved" | "Rejected" | "Reassigned";
   atIso: string;
@@ -61,6 +95,18 @@ export type RequestAttachment = {
   fileName: string;
   addedAtIso: string;
   addedByUserId: string;
+
+  // Optional metadata for richer attachment demos
+  kind?: "file" | "image";
+  previewUrl?: string; // e.g., base64 data URL for image preview
+};
+
+export type RequestNote = {
+  id: string;
+  text: string;
+  createdAtIso: string;
+  createdByUserId: string;
+  mentionedUserIds: string[];
 };
 
 export type RequestRecord = {
@@ -81,4 +127,7 @@ export type RequestRecord = {
   history: RequestStatusHistoryItem[];
 
   attachments: RequestAttachment[];
+
+  // Notes for collaboration / mention demo
+  notes: RequestNote[];
 };

@@ -1,11 +1,11 @@
 import Header from "../components/Header";
-import type { AppConfig, DemoUser, ScreenKey } from "../models/types";
-import { getPrimaryButtonStyle } from "../components/requests/RequestActionBar";
+import type { AppConfig, DemoUser, ScreenKey, RequestRecord } from "../models/types";
 
 type Props = {
   onNavigate: (screen: ScreenKey) => void;
   config: AppConfig;
   currentUser: DemoUser;
+  requests: RequestRecord[];
 };
 
 const NAV_ITEMS: { screen: ScreenKey; label: string; description: string; icon: string }[] = [
@@ -15,14 +15,29 @@ const NAV_ITEMS: { screen: ScreenKey; label: string; description: string; icon: 
   { screen: "configurator", label: "Settings", description: "Update application settings", icon: "⚙️" },
 ];
 
-export default function HomeScreen({ onNavigate, config, currentUser }: Props) {
+export default function HomeScreen({ onNavigate, config, currentUser, requests }: Props) {
+  const safeRequests = Array.isArray(requests) ? requests : [];
+  const finalStatusId = config.statuses[config.statuses.length - 1]?.id ?? "closed";
+
+  const draftCount = safeRequests.filter(
+    (r) => r.createdByUserId === currentUser.id && r.statusId === "draft"
+  ).length;
+
+  const pendingCount = safeRequests.filter(
+    (r) => r.assignedApproverUserId === currentUser.id && r.statusId !== "draft"
+  ).length;
+
+  const completedCount = safeRequests.filter(
+    (r) => r.createdByUserId === currentUser.id && r.statusId === finalStatusId
+  ).length;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       <Header config={config} currentUser={currentUser} onNavigate={onNavigate} />
 
       {/* Full-height split below header */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        {/* ── LEFT PANEL: 60%, light gray ── */}
+        {/* ── LEFT PANEL ── */}
         <div
           style={{
             flex: "0 0 50%",
@@ -84,13 +99,16 @@ export default function HomeScreen({ onNavigate, config, currentUser }: Props) {
           <button
             onClick={() => onNavigate("new")}
             style={{
-              ...getPrimaryButtonStyle(config.buttonColor),
               alignSelf: "flex-start",
+              background: config.buttonColor,
+              color: "#ffffff",
+              border: "none",
+              borderRadius: 10,
               padding: "13px 24px",
               fontSize: 14,
               fontWeight: 700,
+              cursor: "pointer",
               letterSpacing: "0.01em",
-              border: `1px solid ${config.buttonColor}`,
             }}
           >
             {config.newButtonLabel}
@@ -100,16 +118,16 @@ export default function HomeScreen({ onNavigate, config, currentUser }: Props) {
           <div
             style={{
               display: "flex",
-              gap: 40,
+              gap: 100,
               marginTop: 52,
               paddingTop: 32,
               borderTop: "1px solid #d1d5db",
             }}
           >
             {[
-              { value: "3", label: "Draft" },
-              { value: "3", label: "Pending" },
-              { value: "5", label: "Completed" },
+              { value: String(draftCount), label: "Draft" },
+              { value: String(pendingCount), label: "Pending" },
+              { value: String(completedCount), label: "Completed" },
             ].map(({ value, label }) => (
               <div key={label}>
                 <div style={{ fontSize: 30, fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
@@ -119,10 +137,12 @@ export default function HomeScreen({ onNavigate, config, currentUser }: Props) {
               </div>
             ))}
           </div>
-          <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 10 }}>Updated every 15 minutes</div>
+          <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 10 }}>
+            Updated in real time
+          </div>
         </div>
 
-        {/* ── RIGHT PANEL: 40%, white ── */}
+        {/* ── RIGHT PANEL ── */}
         <div
           style={{
             flex: "0 0 50%",
@@ -168,7 +188,6 @@ export default function HomeScreen({ onNavigate, config, currentUser }: Props) {
                   width: "100%",
                 }}
               >
-                {/* Icon circle */}
                 <div
                   style={{
                     width: 40,
@@ -185,15 +204,15 @@ export default function HomeScreen({ onNavigate, config, currentUser }: Props) {
                   {icon}
                 </div>
 
-                {/* Text */}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 2 }}>
                     {label}
                   </div>
-                  <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.4 }}>{description}</div>
+                  <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.4 }}>
+                    {description}
+                  </div>
                 </div>
 
-                {/* Arrow */}
                 <div style={{ color: "#94a3b8", fontSize: 18, flexShrink: 0 }}>→</div>
               </button>
             ))}

@@ -1,4 +1,11 @@
-import type { AppConfig, FieldConfig, FieldType, SectionConfig, StatusConfig } from "../models/types";
+import type {
+  AppConfig,
+  FieldConfig,
+  FieldLayout,
+  FieldType,
+  SectionConfig,
+  StatusConfig,
+} from "../models/types";
 
 export type DraftFieldRow = {
   id: string;
@@ -6,6 +13,7 @@ export type DraftFieldRow = {
   type: FieldType;
   sectionName: string;
   required: boolean;
+  layout: FieldLayout;
 };
 
 export function slugify(input: string) {
@@ -26,12 +34,14 @@ export function makeUniqueId(base: string, used: Set<string>) {
 export function buildDraftFieldRows(config: AppConfig): DraftFieldRow[] {
   return config.fields.map((field) => {
     const section = config.sections.find((s) => s.id === field.section);
+
     return {
       id: field.id,
       label: field.label,
       type: field.type,
       sectionName: section?.title ?? `Section ${field.section}`,
       required: field.required,
+      layout: field.layout ?? "half",
     };
   });
 }
@@ -42,6 +52,7 @@ export function buildSectionsAndFields(rows: DraftFieldRow[]) {
       ...row,
       label: row.label.trim(),
       sectionName: row.sectionName.trim() || "General",
+      layout: row.layout ?? "half",
     }))
     .filter((row) => row.label);
 
@@ -64,12 +75,14 @@ export function buildSectionsAndFields(rows: DraftFieldRow[]) {
     sectionIdByName.set(section.title, section.id as 1 | 2 | 3);
   });
 
+  // Keep IDs stable across template submits.
+  // Still guarantees uniqueness just in case (e.g., duplicated row ids).
   const usedFieldIds = new Set<string>();
 
   const fields: FieldConfig[] = cleanedRows
     .filter((row) => sectionIdByName.has(row.sectionName))
     .map((row) => {
-      const baseId = slugify(row.label) || "field";
+      const baseId = row.id?.trim() || slugify(row.label) || "field";
       const uniqueId = makeUniqueId(baseId, usedFieldIds);
       usedFieldIds.add(uniqueId);
 
@@ -79,6 +92,7 @@ export function buildSectionsAndFields(rows: DraftFieldRow[]) {
         type: row.type,
         section: sectionIdByName.get(row.sectionName)!,
         required: row.required,
+        layout: row.layout ?? "half",
       };
 
       if (row.type === "choice") {

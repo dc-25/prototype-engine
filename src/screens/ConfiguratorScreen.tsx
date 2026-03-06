@@ -3,12 +3,11 @@ import type { Dispatch, SetStateAction } from "react";
 import Header from "../components/Header";
 import FieldsTable from "../components/configurator/FieldsTable";
 import StatusEditor from "../components/configurator/StatusEditor";
+import LogoUpload from "../components/configurator/LogoUpload";
+import TemplateLibraryPanel from "../components/configurator/TemplateLibraryPanel";
 import type { AppConfig, DemoUser, ScreenKey } from "../models/types";
-import {
-  buildDraftFieldRows,
-  buildSectionsAndFields,
-  type DraftFieldRow,
-} from "../utils/configBuilder";
+import { buildDraftFieldRows, buildSectionsAndFields, type DraftFieldRow } from "../utils/configBuilder";
+import { cardStyle, inputStyle, labelStyle, primaryButtonStyle, secondaryButtonStyle } from "../components/configurator/configStyles";
 
 type Props = {
   onNavigate: (screen: ScreenKey) => void;
@@ -28,21 +27,20 @@ export default function ConfiguratorScreen({
   currentUser,
 }: Props) {
   const [draftConfig, setDraftConfig] = useState<AppConfig>(config);
-  const [draftFieldRows, setDraftFieldRows] = useState<DraftFieldRow[]>(() =>
-    buildDraftFieldRows(config)
-  );
+  const [draftFieldRows, setDraftFieldRows] = useState<DraftFieldRow[]>(() => buildDraftFieldRows(config));
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog>("none");
 
+  const [hasInitialized, setHasInitialized] = useState(false);
+
   useEffect(() => {
+    if (hasInitialized) return;
     setDraftConfig(config);
     setDraftFieldRows(buildDraftFieldRows(config));
-  }, [config]);
+    setHasInitialized(true);
+  }, [config, hasInitialized]);
 
   function handleTextChange<K extends keyof AppConfig>(key: K, value: AppConfig[K]) {
-    setDraftConfig((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setDraftConfig((prev) => ({ ...prev, [key]: value }));
   }
 
   function validateDraft(): { sections: AppConfig["sections"]; fields: AppConfig["fields"] } | null {
@@ -63,6 +61,12 @@ export default function ConfiguratorScreen({
     return { sections, fields };
   }
 
+  function getValidatedFullConfig(): AppConfig | null {
+    const validated = validateDraft();
+    if (!validated) return null;
+    return { ...draftConfig, sections: validated.sections, fields: validated.fields };
+  }
+
   function openConfirm() {
     const validated = validateDraft();
     if (!validated) return;
@@ -74,15 +78,10 @@ export default function ConfiguratorScreen({
   }
 
   function applyTemplate() {
-    const validated = validateDraft();
-    if (!validated) return;
+    const fullConfig = getValidatedFullConfig();
+    if (!fullConfig) return;
 
-    setAppConfig({
-      ...draftConfig,
-      sections: validated.sections,
-      fields: validated.fields,
-    });
-
+    setAppConfig(fullConfig);
     resetRequests();
     closeConfirm();
     onNavigate("home");
@@ -93,15 +92,7 @@ export default function ConfiguratorScreen({
       <Header config={config} currentUser={currentUser} onNavigate={onNavigate} />
 
       <main style={{ width: "100%", padding: 32, boxSizing: "border-box" }}>
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            padding: 24,
-            maxWidth: 1200,
-          }}
-        >
+        <div style={cardStyle}>
           <div style={{ fontSize: 24, fontWeight: 800, color: "#111827", marginBottom: 10 }}>
             Configuration
           </div>
@@ -111,6 +102,12 @@ export default function ConfiguratorScreen({
             Section column in the Fields table.
           </div>
 
+          <TemplateLibraryPanel
+            setDraftConfig={setDraftConfig}
+            setDraftFieldRows={setDraftFieldRows}
+            getValidatedFullConfig={getValidatedFullConfig}
+          />
+
           <div
             style={{
               display: "grid",
@@ -119,86 +116,38 @@ export default function ConfiguratorScreen({
               marginBottom: 24,
             }}
           >
-            <ConfigInput
-              label="App Name"
-              value={draftConfig.appName}
-              onChange={(value) => handleTextChange("appName", value)}
-            />
-
-            <ConfigInput
-              label="Municipality"
-              value={draftConfig.municipality}
-              onChange={(value) => handleTextChange("municipality", value)}
-            />
-
-            <ConfigInput
-              label="Category"
-              value={draftConfig.category}
-              onChange={(value) => handleTextChange("category", value)}
-            />
-
-            <ConfigInput
-              label="Action Item"
-              value={draftConfig.actionItem}
-              onChange={(value) => handleTextChange("actionItem", value)}
-            />
+            <ConfigInput label="App Name" value={draftConfig.appName} onChange={(v) => handleTextChange("appName", v)} />
+            <ConfigInput label="Municipality" value={draftConfig.municipality} onChange={(v) => handleTextChange("municipality", v)} />
+            <ConfigInput label="Category" value={draftConfig.category} onChange={(v) => handleTextChange("category", v)} />
+            <ConfigInput label="Action Item" value={draftConfig.actionItem} onChange={(v) => handleTextChange("actionItem", v)} />
 
             <div style={{ gridColumn: "1 / -1" }}>
               <ConfigTextarea
                 label="Form Description"
                 value={draftConfig.formDescription}
-                onChange={(value) => handleTextChange("formDescription", value)}
+                onChange={(v) => handleTextChange("formDescription", v)}
               />
             </div>
 
-            <ConfigInput
-              label="New Button Label"
-              value={draftConfig.newButtonLabel}
-              onChange={(value) => handleTextChange("newButtonLabel", value)}
-            />
+            <ConfigInput label="New Button Label" value={draftConfig.newButtonLabel} onChange={(v) => handleTextChange("newButtonLabel", v)} />
+            <ConfigInput label="Header Color" value={draftConfig.headerColor} onChange={(v) => handleTextChange("headerColor", v)} />
+            <ConfigInput label="Button Color" value={draftConfig.buttonColor} onChange={(v) => handleTextChange("buttonColor", v)} />
 
-            <ConfigInput
-              label="Header Color"
-              value={draftConfig.headerColor}
-              onChange={(value) => handleTextChange("headerColor", value)}
-            />
+            <div style={{ gridColumn: "1 / -1" }}>
+              <LogoUpload
+                label="Logo Upload"
+                value={draftConfig.logoUrl}
+                onChange={(dataUrl) => handleTextChange("logoUrl", dataUrl)}
+              />
+            </div>
 
-            <ConfigInput
-              label="Button Color"
-              value={draftConfig.buttonColor}
-              onChange={(value) => handleTextChange("buttonColor", value)}
-            />
-            <ConfigInput
-              label="Logo URL"
-              value={draftConfig.logoUrl}
-              onChange={(value) => handleTextChange("logoUrl", value)}
-            />
-            <ConfigInput
-              label="Logo URL"
-              value={draftConfig.logoUrl}
-              onChange={(value) => handleTextChange("logoUrl", value)}
-            />
-            <ConfigInput
-              label="Pill Color"
-              value={draftConfig.pillColor}
-              onChange={(value) => handleTextChange("pillColor", value)}
-            />
-
-            <ConfigInput
-              label="Pill Text Color"
-              value={draftConfig.pillTextColor}
-              onChange={(value) => handleTextChange("pillTextColor", value)}
-            />
+            <ConfigInput label="Pill Color" value={draftConfig.pillColor} onChange={(v) => handleTextChange("pillColor", v)} />
+            <ConfigInput label="Pill Text Color" value={draftConfig.pillTextColor} onChange={(v) => handleTextChange("pillTextColor", v)} />
           </div>
 
           <StatusEditor
             statuses={draftConfig.statuses}
-            onChange={(next) =>
-              setDraftConfig((prev) => ({
-                ...prev,
-                statuses: next,
-              }))
-            }
+            onChange={(next) => setDraftConfig((prev) => ({ ...prev, statuses: next }))}
           />
 
           <FieldsTable rows={draftFieldRows} onChange={setDraftFieldRows} />
@@ -208,10 +157,7 @@ export default function ConfiguratorScreen({
               Cancel
             </button>
 
-            <button
-              onClick={openConfirm}
-              style={primaryButtonStyle(draftConfig.buttonColor)}
-            >
+            <button onClick={openConfirm} style={primaryButtonStyle(draftConfig.buttonColor)}>
               Submit Template
             </button>
           </div>
@@ -265,22 +211,12 @@ export default function ConfiguratorScreen({
               This action cannot be undone.
             </div>
 
-            <div
-              style={{
-                marginTop: 20,
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 12,
-              }}
-            >
+            <div style={{ marginTop: 20, display: "flex", justifyContent: "flex-end", gap: 12 }}>
               <button onClick={closeConfirm} style={secondaryButtonStyle}>
                 Cancel
               </button>
 
-              <button
-                onClick={applyTemplate}
-                style={primaryButtonStyle(draftConfig.buttonColor)}
-              >
+              <button onClick={applyTemplate} style={primaryButtonStyle(draftConfig.buttonColor)}>
                 Confirm & Apply
               </button>
             </div>
@@ -318,45 +254,3 @@ function ConfigTextarea({ label, value, onChange }: ConfigInputProps) {
     </div>
   );
 }
-
-const labelStyle = {
-  display: "block",
-  fontSize: 12,
-  fontWeight: 700,
-  color: "#4b5563",
-  textTransform: "uppercase" as const,
-  letterSpacing: "0.04em",
-  marginBottom: 6,
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #d1d5db",
-  fontSize: 14,
-  background: "#ffffff",
-  boxSizing: "border-box" as const,
-};
-
-const primaryButtonStyle = (buttonColor: string) => ({
-  background: buttonColor,
-  color: "#ffffff",
-  border: `1px solid ${buttonColor}`,
-  borderRadius: 10,
-  padding: "10px 16px",
-  fontSize: 14,
-  fontWeight: 600,
-  cursor: "pointer",
-});
-
-const secondaryButtonStyle = {
-  background: "#ffffff",
-  color: "#111827",
-  border: "1px solid #d1d5db",
-  borderRadius: 10,
-  padding: "10px 16px",
-  fontSize: 14,
-  fontWeight: 600,
-  cursor: "pointer",
-};

@@ -1,20 +1,21 @@
 import type { AppConfig } from "../models/types";
 
 export const defaultConfig: AppConfig = {
-  appName: "Inspection Manager",
-  municipality: "StoneShare Starter Kit",
-  category: "Inspection Portal",
-  actionItem: "Submit Your Inspection",
+  appName: "Prospect Engine",
+  municipality: "City of Ottawa",
+  category: "Request",
+  actionItem: "Information Technology",
   formDescription:
-    "Submit, track, and manage inspections in one place. Start a new inspection, review submissions, and follow up on items that need attention.",
-  newButtonLabel: "New Inspection",
+    "Submit, track, and manage requests in one place. Start a new request, review submissions, and follow up on items that need attention.",
+  newButtonLabel: "New Request",
 
-  headerColor: "#ffffff",
-  buttonColor: "#0f172a",
-  pillColor: "#f9e4a0",
-  pillTextColor: "#78540a",
+  headerColor: "#76a3dd",
+  buttonColor: "#5c5d70",
+  pillColor: "#76a3dd",
+  pillTextColor: "#ffffff",
 
   // Optional brand logo shown in the UI (e.g., bottom-right). Leave blank for none.
+  // Use a data URL via the Configurator upload (recommended), not an external URL.
   logoUrl: "",
 
   statuses: [

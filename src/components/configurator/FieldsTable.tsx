@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { FieldType } from "../../models/types";
+import type { FieldLayout, FieldType } from "../../models/types";
 import type { DraftFieldRow } from "../../utils/configBuilder";
 
 type Props = {
@@ -70,7 +70,8 @@ export default function FieldsTable({ rows, onChange }: Props) {
         type: "text",
         sectionName: rows[0]?.sectionName || "Basic Information",
         required: false,
-      },
+        layout: "half",
+      } as DraftFieldRow,
     ]);
   }
 
@@ -109,7 +110,7 @@ export default function FieldsTable({ rows, onChange }: Props) {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1.4fr 0.9fr 1fr 0.7fr 0.5fr",
+              gridTemplateColumns: "1.35fr 0.9fr 1fr 0.7fr 0.7fr 0.5fr",
               background: "#f8fafc",
               borderBottom: "1px solid #e5e7eb",
             }}
@@ -118,6 +119,7 @@ export default function FieldsTable({ rows, onChange }: Props) {
             <div style={headerCellStyle}>Field Type</div>
             <div style={headerCellStyle}>Section</div>
             <div style={headerCellStyle}>Required</div>
+            <div style={headerCellStyle}>Layout</div>
             <div style={headerCellStyle}></div>
           </div>
 
@@ -126,7 +128,7 @@ export default function FieldsTable({ rows, onChange }: Props) {
               key={row.id}
               style={{
                 display: "grid",
-                gridTemplateColumns: "1.4fr 0.9fr 1fr 0.7fr 0.5fr",
+                gridTemplateColumns: "1.35fr 0.9fr 1fr 0.7fr 0.7fr 0.5fr",
                 borderBottom: "1px solid #e5e7eb",
               }}
             >
@@ -148,10 +150,12 @@ export default function FieldsTable({ rows, onChange }: Props) {
                 >
                   <option value="text">Text</option>
                   <option value="multiline">Multiline</option>
+                  <option value="richtext">Rich Text</option>
                   <option value="number">Number</option>
                   <option value="date">Date</option>
                   <option value="choice">Choice</option>
                   <option value="boolean">Boolean</option>
+                  <option value="image">Image</option>
                 </select>
               </div>
 
@@ -169,6 +173,24 @@ export default function FieldsTable({ rows, onChange }: Props) {
                   checked={row.required}
                   onChange={(e) => handleFieldRowChange(row.id, "required", e.target.checked)}
                 />
+              </div>
+
+              <div style={bodyCellStyle}>
+                <select
+                  value={(row as any).layout ?? "half"}
+                  onChange={(e) =>
+                    handleFieldRowChange(
+                      row.id,
+                      "layout" as keyof DraftFieldRow,
+                      e.target.value as FieldLayout
+                    )
+                  }
+                  style={tableInputStyle}
+                >
+                  <option value="quarter">Quarter</option>
+                  <option value="half">Half</option>
+                  <option value="full">Full</option>
+                </select>
               </div>
 
               <div style={{ ...bodyCellStyle, display: "flex", justifyContent: "center" }}>

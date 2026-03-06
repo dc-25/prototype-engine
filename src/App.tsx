@@ -105,7 +105,7 @@ export default function App() {
       bottom: 10,
       right: 10,
       zIndex: 2000,
-      height: 64,
+      height: 40,
       width: "auto",
       display: "block",
     }}
@@ -113,7 +113,12 @@ export default function App() {
 ) : null}
 
       {screen === "home" && (
-        <HomeScreen onNavigate={handleNavigate} config={appConfig} currentUser={currentUser} />
+        <HomeScreen 
+          onNavigate={handleNavigate} 
+          config={appConfig} 
+          currentUser={currentUser}
+          requests={requests} 
+          />
       )}
 
       {screen === "new" && (

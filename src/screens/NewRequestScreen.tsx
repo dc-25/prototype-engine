@@ -15,6 +15,8 @@ import type {
   AppConfig,
   DemoUser,
   ScreenKey,
+  RequestAttachment,
+  RequestNote,
   RequestRecord,
 } from "../models/types";
 import { validateRequiredFields } from "../utils/validation";
@@ -24,11 +26,7 @@ import {
   getNextStatusId,
   getStatusIndex,
 } from "../utils/statusFlow";
-import {
-  buildRequestNumber,
-  formatAuditTimestamp,
-  getInitialValues,
-} from "../utils/requestUtils";
+import { buildRequestNumber, formatAuditTimestamp, getInitialValues } from "../utils/requestUtils";
 
 type Props = {
   onNavigate: (screen: ScreenKey) => void;
@@ -42,6 +40,17 @@ type Props = {
 
 type ReviewDialog = "none" | "reject" | "reassign";
 type RightTab = "attachments" | "notes" | "audit";
+
+type ImageValue = {
+  fileName: string;
+  dataUrl: string;
+};
+
+function isImageValue(value: unknown): value is ImageValue {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.fileName === "string" && typeof v.dataUrl === "string";
+}
 
 export default function NewRequestScreen({
   onNavigate,
@@ -60,6 +69,12 @@ export default function NewRequestScreen({
   const [rejectReason, setRejectReason] = useState("");
   const [reassignUserId, setReassignUserId] = useState("");
   const [rightTab, setRightTab] = useState<RightTab>("attachments");
+
+  // Attachments for a brand-new (unsaved) request
+  const [draftAttachments, setDraftAttachments] = useState<RequestAttachment[]>([]);
+
+  // Notes for a brand-new (unsaved) request
+  const [draftNotes, setDraftNotes] = useState<RequestNote[]>([]);
 
   const userNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -95,9 +110,7 @@ export default function NewRequestScreen({
 
   const reassignOptions = useMemo(() => {
     if (!activeRecord) return [];
-    return demoUsers.filter(
-      (user) => user.id !== activeRecord.assignedApproverUserId
-    );
+    return demoUsers.filter((user) => user.id !== activeRecord.assignedApproverUserId);
   }, [activeRecord]);
 
   const sections = useMemo(() => {
@@ -127,6 +140,8 @@ export default function NewRequestScreen({
     if (!activeRecord) {
       setValues(getInitialValues(config.fields));
       setErrors({});
+      setDraftAttachments([]);
+      setDraftNotes([]);
       return;
     }
 
@@ -153,11 +168,71 @@ export default function NewRequestScreen({
     setReassignUserId("");
   }
 
+  function addImageAttachment(fileName: string, dataUrl: string) {
+    const nowIso = new Date().toISOString();
+    const attachment: RequestAttachment = {
+      id: `att-${crypto.randomUUID()}`,
+      fileName,
+      addedAtIso: nowIso,
+      addedByUserId: currentUser.id,
+      kind: "image",
+      previewUrl: dataUrl,
+    };
+
+    if (activeRecord) {
+      setRequests((prev) =>
+        prev.map((request) => {
+          if (request.id !== activeRecord.id) return request;
+          return {
+            ...request,
+            updatedAtIso: nowIso,
+            attachments: [...(request.attachments ?? []), attachment],
+          };
+        })
+      );
+      return;
+    }
+
+    setDraftAttachments((prev) => [...prev, attachment]);
+  }
+
+  function addNote(text: string, mentionedUserIds: string[]) {
+    const nowIso = new Date().toISOString();
+    const note: RequestNote = {
+      id: `note-${crypto.randomUUID()}`,
+      text,
+      createdAtIso: nowIso,
+      createdByUserId: currentUser.id,
+      mentionedUserIds,
+    };
+
+    if (activeRecord) {
+      setRequests((prev) =>
+        prev.map((request) => {
+          if (request.id !== activeRecord.id) return request;
+          return {
+            ...request,
+            updatedAtIso: nowIso,
+            notes: [...(request.notes ?? []), note],
+          };
+        })
+      );
+      return;
+    }
+
+    setDraftNotes((prev) => [...prev, note]);
+  }
+
   function handleFieldChange(fieldId: string, value: unknown) {
     setValues((prev) => ({
       ...prev,
       [fieldId]: value,
     }));
+
+    const field = config.fields.find((f) => f.id === fieldId);
+    if (field?.type === "image" && isImageValue(value)) {
+      addImageAttachment(value.fileName, value.dataUrl);
+    }
 
     setErrors((prev) => {
       if (!prev[fieldId]) return prev;
@@ -172,6 +247,8 @@ export default function NewRequestScreen({
     clearSelectedRequest?.();
     setValues(getInitialValues(config.fields));
     setErrors({});
+    setDraftAttachments([]);
+    setDraftNotes([]);
   }
 
   function handleBack() {
@@ -204,7 +281,8 @@ export default function NewRequestScreen({
           toStatusId: statusId,
         },
       ],
-      attachments: [],
+      attachments: [...draftAttachments],
+      notes: [...draftNotes],
     };
   }
 
@@ -241,6 +319,8 @@ export default function NewRequestScreen({
 
     const record = buildRecord("draft");
     setRequests((prev) => [record, ...prev]);
+    setDraftAttachments([]);
+    setDraftNotes([]);
     clearSelectedRequest?.();
     onNavigate("my");
   }
@@ -292,6 +372,8 @@ export default function NewRequestScreen({
     const record = buildRecord(submittedStatusId);
 
     setRequests((prev) => [record, ...prev]);
+    setDraftAttachments([]);
+    setDraftNotes([]);
     clearSelectedRequest?.();
     setValues(getInitialValues(config.fields));
     onNavigate("all");
@@ -444,6 +526,7 @@ export default function NewRequestScreen({
               fileName: `Attachment ${(request.attachments ?? []).length + 1}.pdf`,
               addedAtIso: nowIso,
               addedByUserId: currentUser.id,
+              kind: "file",
             },
           ],
         };
@@ -452,34 +535,33 @@ export default function NewRequestScreen({
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f3f4f6" }}>
+    <div style={{ minHeight: "100vh", background: "#ffffff" }}>
       <Header config={config} currentUser={currentUser} onNavigate={onNavigate} />
 
       <main
         style={{
           width: "100%",
-          maxWidth: 1600,
-          margin: "0 auto",
           padding: "24px",
           boxSizing: "border-box",
         }}
       >
+        <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid #e5e7eb" }}>
+          <StatusStepper
+            statuses={config.statuses}
+            currentStatusId={activeRecord?.statusId ?? "draft"}
+            activeColor={config.buttonColor}
+          />
+        </div>
+
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "minmax(0, 1fr) 380px",
-            gap: 20,
+            gap: 32,
             alignItems: "start",
           }}
         >
-          <section
-            style={{
-              background: "#ffffff",
-              border: "1px solid #d1d5db",
-              borderRadius: 16,
-              padding: 20,
-            }}
-          >
+          <section style={{ background: "#ffffff", padding: "0 0 24px 0" }}>
             <RequestHeaderCard
               isViewingRecord={isViewingRecord}
               formDescription={config.formDescription}
@@ -501,47 +583,69 @@ export default function NewRequestScreen({
               formatTimestamp={formatAuditTimestamp}
             />
 
-            <div style={{ marginBottom: 24 }}>
-              <StatusStepper
-                statuses={config.statuses}
-                currentStatusId={activeRecord?.statusId ?? "draft"}
-              />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
               {sections.map((section, index) => (
                 <section key={section.id}>
-                  <div
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 700,
-                      color: "#111827",
-                      marginBottom: 14,
-                    }}
-                  >
-                    {index + 1} {section.title}
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+                    <div
+                      style={{
+                        width: 4,
+                        height: 32,
+                        borderRadius: 999,
+                        background: config.buttonColor,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div
+                      style={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: 8,
+                        background: config.buttonColor,
+                        color: "#ffffff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {index + 1}
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>
+                      {section.title}
+                    </div>
                   </div>
+
+                  <div style={{ height: 1, background: "#e5e7eb", marginBottom: 20 }} />
 
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gridTemplateColumns: "repeat(4, 1fr)",
                       gap: 16,
                     }}
                   >
-                    {section.fields.map((field) => (
-                      <FieldRenderer
-                        key={field.id}
-                        field={field}
-                        value={values[field.id]}
-                        error={errors[field.id]}
-                        onChange={
-                          isViewingRecord && !isEditingDraft
-                            ? (_fieldId, _value) => {}
-                            : handleFieldChange
-                        }
-                      />
-                    ))}
+                    {section.fields.map((field) => {
+                      const layout = field.layout ?? "half";
+                      const colSpan =
+                        layout === "full" ? 4 : layout === "quarter" ? 1 : 2;
+                      return (
+                        <div key={field.id} style={{ gridColumn: `span ${colSpan}` }}>
+                          <FieldRenderer
+                            field={field}
+                            value={values[field.id]}
+                            error={errors[field.id]}
+                            onChange={
+                              isViewingRecord && !isEditingDraft
+                                ? (_fieldId, _value) => {}
+                                : handleFieldChange
+                            }
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </section>
               ))}
@@ -559,10 +663,7 @@ export default function NewRequestScreen({
                   </button>
 
                   {isEditingDraft && (
-                    <button
-                      onClick={handleSave}
-                      style={getPrimaryButtonStyle(config.buttonColor)}
-                    >
+                    <button onClick={handleSave} style={getPrimaryButtonStyle(config.buttonColor)}>
                       Save
                     </button>
                   )}
@@ -606,13 +707,18 @@ export default function NewRequestScreen({
           </section>
 
           <RequestSidePanel
+            buttonColor={config.buttonColor}
             rightTab={rightTab}
             setRightTab={setRightTab}
             activeRecord={activeRecord}
+            draftAttachments={draftAttachments}
+            draftNotes={draftNotes}
             auditItems={auditItems}
             getUserName={userNameById}
             formatTimestamp={formatAuditTimestamp}
             onAddPlaceholderAttachment={addPlaceholderAttachment}
+            mentionCandidates={demoUsers}
+            onAddNote={addNote}
           />
         </div>
       </main>
@@ -623,7 +729,7 @@ export default function NewRequestScreen({
         reassignUserId={reassignUserId}
         reassignOptions={reassignOptions}
         buttonColor={config.buttonColor}
-        onClose={closeDialog}
+        onClose={() => closeDialog()}
         onRejectReasonChange={setRejectReason}
         onReassignUserIdChange={setReassignUserId}
         onConfirmReject={confirmReject}

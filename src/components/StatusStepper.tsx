@@ -3,9 +3,17 @@ import type { StatusConfig } from "../models/types";
 type Props = {
   statuses: StatusConfig[];
   currentStatusId?: string;
+  activeColor?: string; // NEW: primary button color
 };
 
-export default function StatusStepper({ statuses, currentStatusId }: Props) {
+export default function StatusStepper({ statuses, currentStatusId, activeColor }: Props) {
+  const primary = activeColor ?? "#111827";
+
+  const currentIndex =
+    currentStatusId !== undefined
+      ? statuses.findIndex((item) => item.id === currentStatusId)
+      : -1;
+
   return (
     <div
       style={{
@@ -17,9 +25,7 @@ export default function StatusStepper({ statuses, currentStatusId }: Props) {
     >
       {statuses.map((status, index) => {
         const isActive = status.id === currentStatusId;
-        const isComplete =
-          currentStatusId !== undefined &&
-          statuses.findIndex((item) => item.id === currentStatusId) > index;
+        const isComplete = currentIndex > index;
 
         let background = "#ffffff";
         let color = "#374151";
@@ -27,13 +33,13 @@ export default function StatusStepper({ statuses, currentStatusId }: Props) {
 
         if (isComplete) {
           background = "#e5e7eb";
-          color = "#111827";
+          color = "#12331b"; // completed text color
         }
 
         if (isActive) {
-          background = "#111827";
+          background = primary; // active uses primary color
           color = "#ffffff";
-          border = "1px solid #111827";
+          border = `1px solid ${primary}`;
         }
 
         return (

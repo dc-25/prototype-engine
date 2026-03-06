@@ -1,0 +1,38 @@
+{
+  "appId": "e24a71b2-fd73-451b-a8a7-111351ed60cd",
+  "appDisplayName": "Prototype Engine",
+  "description": null,
+  "environmentId": "ab8b88e0-e839-ec51-bf7a-5b7c5d93f3f0",
+  "buildPath": "./dist",
+  "buildEntryPoint": "index.html",
+  "logoPath": "Default",
+  "localAppUrl": "http://localhost:3000/",
+  "region": "prod",
+  "connectionReferences": {
+    "8638ac6c-5810-4570-8597-97c89c4172d4": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_commondataservice",
+      "displayName": "Microsoft Dataverse",
+      "dataSources": ["commondataservice"],
+      "dataSets": {}
+    }
+  },
+  "databaseReferences": {
+    "default.cds": {
+      "dataSources": {
+        "municipalityprofiles": {
+          "entitySetName": "cr27b_municipalityprofiles",
+          "logicalName": "cr27b_municipalityprofile"
+        },
+        "prototypetemplates": {
+          "entitySetName": "cr27b_prototypetemplates",
+          "logicalName": "cr27b_prototypetemplate"
+        }
+      },
+      "environmentVariableName": ""
+    }
+  },
+  "version": "1.0",
+  "csp": {
+    "img-src": ["'self'", "data:", "https:"]
+  }
+}
